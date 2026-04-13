@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -24,7 +24,7 @@ function resolveDataDir(): string {
 
   const tmpFallback = path.join(os.tmpdir(), 'medcontrol-data');
   fs.mkdirSync(tmpFallback, { recursive: true });
-  console.warn(`Using temp data dir: ${tmpFallback} (data will NOT persist across restarts)`);
+  console.warn(`Using temp data dir: ${tmpFallback}`);
   return tmpFallback;
 }
 
@@ -33,12 +33,11 @@ const DB_PATH  = path.join(DATA_DIR, 'medications.db');
 
 console.log('Database path:', DB_PATH);
 
-const db = new Database(DB_PATH);
+const db = new DatabaseSync(DB_PATH);
 
-// Performance optimizations
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-db.pragma('synchronous = NORMAL');
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA foreign_keys = ON");
+db.exec("PRAGMA synchronous = NORMAL");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -115,19 +114,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_push_user             ON push_subscriptions(user_id);
 `);
 
-// Migration: add patient_id column to existing medications table if not present
 try {
   db.exec('ALTER TABLE medications ADD COLUMN patient_id INTEGER REFERENCES patients(id) ON DELETE SET NULL');
   console.log('Migration: added patient_id to medications');
-} catch {
-  // Column already exists — ignore
-}
+} catch { /* Column already exists */ }
 
 try {
   db.exec('CREATE INDEX IF NOT EXISTS idx_medications_patient ON medications(patient_id)');
-} catch {
-  // ignore
-}
+} catch { /* ignore */ }
 
 console.log('Database initialized at:', DB_PATH);
 

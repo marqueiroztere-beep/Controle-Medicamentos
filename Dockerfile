@@ -16,4 +16,4 @@ RUN cd backend && npm run build
 
 EXPOSE 3001
 
-CMD ["node", "start.js"]
+CMD ["node", "--experimental-sqlite", "start.js"]

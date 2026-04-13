@@ -1,6 +1,6 @@
 # MedControl — Controle de Medicamentos
 
-Sistema web completo de controle de medicamentos com persistência real em banco de dados, múltiplos usuários, agenda automática e notificações push.
+Sistema web completo de controle de medicamentos com persistência em banco de dados, múltiplos usuários, agenda automática e notificações push.
 
 ## Funcionalidades
 
@@ -8,7 +8,7 @@ Sistema web completo de controle de medicamentos com persistência real em banco
 - **Medicamentos** — CRUD completo com frequência flexível (intervalo, horários fixos, dias específicos)
 - **Agenda** — Geração automática de doses para 30 dias
 - **Doses** — Registrar como tomado, pular ou adiar
-- **Histórico** — Histórico permanente com filtros (mantido mesmo após exclusão de medicamentos)
+- **Histórico** — Histórico permanente com filtros
 - **Aderência** — Estatísticas e gráficos de cumprimento do tratamento
 - **Notificações** — Web Push 10 minutos antes de cada dose
 
@@ -16,87 +16,103 @@ Sistema web completo de controle de medicamentos com persistência real em banco
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | React 18 + Vite + TypeScript + Tailwind CSS v4 |
-| Backend  | Node.js + Express + TypeScript |
-| Banco    | SQLite via `node:sqlite` (built-in Node v24) |
+| Frontend | React 19 + Vite + TypeScript + Tailwind CSS v4 |
+| Backend  | Node.js 24 + Express + TypeScript |
+| Banco    | SQLite via `node:sqlite` (built-in Node v22.5+) |
 | Auth     | JWT + bcryptjs |
 | Push     | Web Push API + VAPID + Service Workers |
 
-## Como rodar
+---
+
+## Rodar localmente
 
 ### Pré-requisitos
-- Node.js v22+ (recomendado v24)
-- npm
+- Node.js v22.5 ou superior (recomendado v24)
 
-### 1. Backend
+### 1. Instalar dependências
+
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 2. Configurar backend
 
 ```bash
 cd backend
-npm install
 cp .env.example .env
-# Edite .env com seus valores (JWT_SECRET, VAPID keys)
-# Para gerar VAPID keys: npm run generate-vapid
-npm run dev
 ```
 
-O backend roda em `http://localhost:3001`.
+Edite o `.env` e preencha:
+- **JWT_SECRET** — gere com: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+- **VAPID keys** — gere com: `npm run generate-vapid`
 
-### 2. Frontend
+### 3. Iniciar os servidores (2 terminais)
 
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+# Rodando em http://localhost:3001
+```
+
+**Terminal 2 — Frontend:**
 ```bash
 cd frontend
-npm install
 npm run dev
+# Rodando em http://localhost:5173
 ```
 
-O frontend roda em `http://localhost:5173`.
+Abra **http://localhost:5173** no navegador.
 
-### Produção
+---
 
-```bash
-# Backend
-cd backend && npm run build && npm start
+## Deploy (publicar na internet)
 
-# Frontend
-cd frontend && npm run build
-# Deploy a pasta dist/ no GitHub Pages ou qualquer host estático
-```
+### Backend → Render.com (gratuito)
 
-Para deploy em produção, configure a variável `VITE_API_URL` no frontend apontando para o backend hospedado (ex: Render, Railway).
+1. Acesse [render.com](https://render.com) e crie uma conta
+2. Clique em **New → Blueprint** e conecte este repositório
+3. O Render vai ler o `render.yaml` e criar o serviço automaticamente
+4. Configure as variáveis de ambiente obrigatórias no painel:
+   - `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` (gere com `npm run generate-vapid`)
+   - `ALLOWED_ORIGIN` → URL do frontend no Vercel (ver abaixo)
+5. Copie a URL do backend (ex: `https://medcontrol-backend.onrender.com`)
+
+### Frontend → Vercel (gratuito)
+
+1. Acesse [vercel.com](https://vercel.com) e crie uma conta
+2. Importe este repositório
+3. Configure:
+   - **Root Directory:** `frontend`
+   - **Environment Variable:** `VITE_API_URL` = `https://seu-backend.onrender.com/api`
+4. Clique em Deploy
+
+Pronto! O link do Vercel pode ser compartilhado com qualquer pessoa.
+
+---
 
 ## Estrutura
 
 ```
 CONTROLEMEDICAMENTOS/
-├── backend/          Node.js + Express API
+├── render.yaml           Configuração de deploy (Render.com)
+├── backend/
 │   ├── src/
-│   │   ├── config/   Database, JWT
+│   │   ├── config/       Database (SQLite), JWT
 │   │   ├── controllers/
-│   │   ├── services/ Agenda, Notificações, Aderência
+│   │   ├── services/     Agenda, Notificações, Aderência
 │   │   ├── routes/
 │   │   └── app.ts
-│   └── data/         medications.db (criado automaticamente)
+│   ├── data/             medications.db (criado automaticamente, ignorado no git)
+│   └── .env.example      Variáveis de ambiente necessárias
 │
-└── frontend/         React + Vite
-    ├── public/        sw.js (Service Worker), manifest.json
-    └── src/
-        ├── api/       Axios modules
-        ├── components/
-        ├── context/   Auth, Notifications
-        ├── pages/
-        └── store/     Zustand stores
+└── frontend/
+    ├── public/           sw.js, manifest.json, ícones
+    ├── src/
+    │   ├── api/          Axios clients por módulo
+    │   ├── components/
+    │   ├── pages/
+    │   └── store/        Zustand
+    └── .env.example      Variáveis de ambiente necessárias
 ```
-
-## Regras de negócio
-
-- **Soft delete**: Medicamentos excluídos mantêm todo o histórico de doses
-- **Isolamento**: Cada usuário vê apenas seus próprios dados
-- **Agenda**: Gerada automaticamente para 30 dias ao cadastrar ou reativar um medicamento
-- **Notificações**: Enviadas 10 minutos antes do horário previsto (poll a cada 60s)
-- **Pausar**: Cancela doses futuras pendentes sem apagar o histórico
-
-## Design
-
-- Fundo escuro: `#0e0f11`
-- Tipografia: Syne (títulos) + DM Mono (horários, badges)
-- Paleta: Teal `#14b8a6` · Roxo `#8b5cf6` · Âmbar `#f59e0b`

@@ -11,7 +11,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "build": "cd backend && npm install && npm run build",
-    "start": "node backend/dist/app.js"
+    "start": "node start.js"
   },
   "private": true
 }

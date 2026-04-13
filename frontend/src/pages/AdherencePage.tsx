@@ -3,6 +3,7 @@ import { adherenceApi } from '../api/adherenceApi';
 import { Card } from '../components/ui/Card';
 import { PageLoader } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { usePatientStore } from '../store/patientStore';
 import type { AdherenceResponse } from '../types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -12,6 +13,7 @@ export function AdherencePage() {
   const [data, setData]     = useState<AdherenceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'7' | '30'>('7');
+  const { getApiParam, activeFilter } = usePatientStore();
 
   useEffect(() => {
     const to = new Date();
@@ -20,11 +22,11 @@ export function AdherencePage() {
 
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-    adherenceApi.getGlobal({ from: fmt(from), to: fmt(to) })
+    adherenceApi.getGlobal({ from: fmt(from), to: fmt(to), patient_id: getApiParam() })
       .then(res => setData(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, activeFilter]);
 
   if (loading) return <PageLoader />;
   if (!data) return <EmptyState icon="📊" title="Sem dados" description="Registre doses para ver estatísticas de aderência." />;

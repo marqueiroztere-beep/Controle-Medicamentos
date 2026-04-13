@@ -6,6 +6,7 @@ import { todayISO } from '../../utils/dateUtils';
 import type { Medication, MedicationFormData } from '../../types';
 import { medicationsApi } from '../../api/medicationsApi';
 import { extractError } from '../../api/client';
+import { usePatientStore } from '../../store/patientStore';
 
 interface MedicationFormProps {
   initial?: Partial<Medication>;
@@ -34,6 +35,9 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
     }
   }
 
+  const { patients, activeFilter } = usePatientStore();
+  const defaultPatientId = initial?.patient_id ?? (typeof activeFilter === 'number' ? activeFilter : null);
+
   const [form, setForm] = useState<MedicationFormData>({
     name:           initial?.name || '',
     dosage:         initial?.dosage || '',
@@ -46,6 +50,7 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
     start_time:     initial?.start_time || '08:00',
     start_date:     initial?.start_date || todayISO(),
     end_date:       initial?.end_date || '',
+    patient_id:     defaultPatientId,
   });
 
   function set(key: keyof MedicationFormData, value: unknown) {
@@ -92,6 +97,27 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Paciente */}
+      {patients.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-text-secondary">Para quem é este medicamento?</label>
+          <div className="flex flex-wrap gap-1.5">
+            <button type="button"
+              onClick={() => set('patient_id', null)}
+              className={['px-3 py-1.5 rounded-lg text-xs border transition-colors', form.patient_id === null ? 'bg-teal/15 text-teal border-teal/25' : 'bg-surface border-border text-text-muted hover:border-muted'].join(' ')}>
+              Eu (conta principal)
+            </button>
+            {patients.map(p => (
+              <button key={p.id} type="button"
+                onClick={() => set('patient_id', p.id)}
+                className={['px-3 py-1.5 rounded-lg text-xs border transition-colors', form.patient_id === p.id ? 'bg-amber/15 text-amber border-amber/25' : 'bg-surface border-border text-text-muted hover:border-muted'].join(' ')}>
+                {p.name}{p.relationship ? ` · ${p.relationship}` : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Name + Dosage */}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2 flex flex-col gap-1.5">

@@ -27,9 +27,21 @@ db.exec(`
     updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS patients (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name         TEXT    NOT NULL,
+    relationship TEXT,
+    birth_date   TEXT,
+    notes        TEXT,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS medications (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    patient_id     INTEGER REFERENCES patients(id) ON DELETE SET NULL,
     name           TEXT    NOT NULL,
     dosage         REAL    NOT NULL,
     unit           TEXT    NOT NULL,
@@ -76,8 +88,18 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_agenda_medication     ON agenda_items(medication_id);
   CREATE INDEX IF NOT EXISTS idx_agenda_status         ON agenda_items(status);
   CREATE INDEX IF NOT EXISTS idx_medications_user      ON medications(user_id);
+  CREATE INDEX IF NOT EXISTS idx_medications_patient   ON medications(patient_id);
+  CREATE INDEX IF NOT EXISTS idx_patients_user         ON patients(user_id);
   CREATE INDEX IF NOT EXISTS idx_push_user             ON push_subscriptions(user_id);
 `);
+
+// Migration: add patient_id column to existing medications table if not present
+try {
+  db.exec('ALTER TABLE medications ADD COLUMN patient_id INTEGER REFERENCES patients(id) ON DELETE SET NULL');
+  console.log('Migration: added patient_id to medications');
+} catch {
+  // Column already exists — ignore
+}
 
 console.log('Database initialized at:', DB_PATH);
 

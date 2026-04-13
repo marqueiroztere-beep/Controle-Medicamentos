@@ -2,9 +2,12 @@ import { apiClient } from './client';
 import type { Medication, MedicationFormData } from '../types';
 
 export const medicationsApi = {
-  list: (includeDeleted = false) =>
+  list: (includeDeleted = false, patientId?: string) =>
     apiClient.get<{ medications: Medication[] }>('/medications', {
-      params: includeDeleted ? { include: 'deleted' } : undefined,
+      params: {
+        ...(includeDeleted ? { include: 'deleted' } : {}),
+        ...(patientId !== undefined ? { patient_id: patientId } : {}),
+      },
     }),
 
   get: (id: number) =>

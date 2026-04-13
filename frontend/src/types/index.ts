@@ -7,6 +7,26 @@ export interface User {
   created_at?: string;
 }
 
+// ─── Patient ──────────────────────────────────────────────────────────────────
+
+export interface Patient {
+  id: number;
+  user_id: number;
+  name: string;
+  relationship: string | null;
+  birth_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PatientFormData {
+  name: string;
+  relationship: string;
+  birth_date: string;
+  notes: string;
+}
+
 // ─── Medication ───────────────────────────────────────────────────────────────
 
 export type MedicationStatus = 'active' | 'paused' | 'completed';
@@ -15,6 +35,7 @@ export type FrequencyType    = 'interval' | 'daily_times' | 'specific_days';
 export interface Medication {
   id: number;
   user_id: number;
+  patient_id: number | null;
   name: string;
   dosage: number;
   unit: string;
@@ -44,6 +65,7 @@ export interface MedicationFormData {
   start_time: string;
   start_date: string;
   end_date: string;
+  patient_id: number | null;
 }
 
 // ─── Agenda ───────────────────────────────────────────────────────────────────

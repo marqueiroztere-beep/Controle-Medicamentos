@@ -32,6 +32,12 @@ const AGENDA_SELECT = `
   JOIN medications m ON ai.medication_id = m.id
 `;
 
+function patientClause(patientFilter: string | undefined): string {
+  if (patientFilter === 'self') return 'AND m.patient_id IS NULL';
+  if (patientFilter && !isNaN(Number(patientFilter))) return `AND m.patient_id = ${Number(patientFilter)}`;
+  return '';
+}
+
 function formatAgendaItem(row: AgendaRow) {
   return {
     id: row.id,
@@ -57,12 +63,14 @@ export function getToday(req: AuthRequest, res: Response): void {
   const today = todayStr();
   const start = `${today}T00:00:00`;
   const end   = `${today}T23:59:59`;
+  const pc = patientClause(req.query.patient_id as string | undefined);
 
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
       AND ai.scheduled_at BETWEEN ? AND ?
       AND m.deleted_at IS NULL
+      ${pc}
     ORDER BY ai.scheduled_at ASC
   `).all(userId, start, end) as unknown as AgendaRow[];
 
@@ -72,15 +80,16 @@ export function getToday(req: AuthRequest, res: Response): void {
 export function getByDate(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const date = req.query.date as string || todayStr();
-
   const start = `${date}T00:00:00`;
   const end   = `${date}T23:59:59`;
+  const pc = patientClause(req.query.patient_id as string | undefined);
 
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
       AND ai.scheduled_at BETWEEN ? AND ?
       AND m.deleted_at IS NULL
+      ${pc}
     ORDER BY ai.scheduled_at ASC
   `).all(userId, start, end) as unknown as AgendaRow[];
 
@@ -90,17 +99,18 @@ export function getByDate(req: AuthRequest, res: Response): void {
 export function getByRange(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const { from, to } = req.query as { from: string; to: string };
-
   if (!from || !to) {
     res.status(400).json({ error: 'Parâmetros from e to são obrigatórios' });
     return;
   }
+  const pc = patientClause(req.query.patient_id as string | undefined);
 
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
       AND ai.scheduled_at BETWEEN ? AND ?
       AND m.deleted_at IS NULL
+      ${pc}
     ORDER BY ai.scheduled_at ASC
   `).all(userId, `${from}T00:00:00`, `${to}T23:59:59`) as unknown as AgendaRow[];
 

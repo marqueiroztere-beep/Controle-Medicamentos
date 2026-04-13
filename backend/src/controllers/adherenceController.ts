@@ -3,11 +3,18 @@ import db from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { getGlobalAdherence, getMedicationAdherence } from '../services/adherenceService';
 
+function buildPatientClause(patientFilter: string | undefined): string {
+  if (patientFilter === 'self') return 'AND m.patient_id IS NULL';
+  if (patientFilter && !isNaN(Number(patientFilter))) return `AND m.patient_id = ${Number(patientFilter)}`;
+  return '';
+}
+
 export function globalAdherence(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
-  const { from, to } = req.query as { from?: string; to?: string };
+  const { from, to, patient_id } = req.query as { from?: string; to?: string; patient_id?: string };
+  const pc = buildPatientClause(patient_id);
 
-  const stats = getGlobalAdherence(userId, from, to);
+  const stats = getGlobalAdherence(userId, from, to, patient_id);
 
   // Per-medication breakdown
   const meds = db.prepare(`
@@ -16,6 +23,7 @@ export function globalAdherence(req: AuthRequest, res: Response): void {
     FROM medications m
     JOIN agenda_items ai ON ai.medication_id = m.id
     WHERE m.user_id = ? AND ai.status != 'pending'
+    ${pc}
     ORDER BY m.name
   `).all(userId) as Array<{ id: number; name: string; dosage: number; unit: string; status: string; deleted: number }>;
 

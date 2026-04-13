@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { PageLoader } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useToast } from '../components/ui/Toast';
+import { usePatientStore } from '../store/patientStore';
 import type { Medication, MedicationStatus, MedicationFormData } from '../types';
 
 const STATUS_FILTERS: Array<{ value: MedicationStatus | 'all'; label: string }> = [
@@ -24,25 +25,31 @@ export function MedicationsPage() {
   const [addOpen, setAddOpen]         = useState(false);
   const [addLoading, setAddLoading]   = useState(false);
   const { showToast } = useToast();
+  const { getApiParam, activeFilter } = usePatientStore();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await medicationsApi.list();
+      const res = await medicationsApi.list(false, getApiParam());
       setMedications(res.data.medications);
     } catch (err) {
       showToast(extractError(err), 'error');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, activeFilter]);
 
   useEffect(() => { load(); }, [load]);
 
   async function handleAdd(data: Partial<MedicationFormData>) {
     setAddLoading(true);
     try {
-      await medicationsApi.create(data);
+      // Se tem filtro de paciente ativo, já pré-seleciona
+      const payload = {
+        ...data,
+        patient_id: data.patient_id ?? (typeof activeFilter === 'number' ? activeFilter : null),
+      };
+      await medicationsApi.create(payload);
       showToast('Medicamento cadastrado!');
       setAddOpen(false);
       load();

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { PageLoader } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { todayISO, formatDateFull } from '../utils/dateUtils';
+import { usePatientStore } from '../store/patientStore';
 import type { AgendaItem } from '../types';
 import { format, addDays, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -13,15 +14,16 @@ export function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [items, setItems]   = useState<AgendaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getApiParam, activeFilter } = usePatientStore();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await agendaApi.getByDate(selectedDate);
+      const res = await agendaApi.getByDate(selectedDate, getApiParam());
       setItems(res.data.items);
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [selectedDate]);
+  }, [selectedDate, activeFilter]);
 
   useEffect(() => { load(); }, [load]);
 

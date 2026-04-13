@@ -6,6 +6,7 @@ import { generateAgenda, cancelFuturePendingItems, regenerateFutureAgenda } from
 interface MedicationRow {
   id: number;
   user_id: number;
+  patient_id: number | null;
   name: string;
   dosage: number;
   unit: string;
@@ -26,13 +27,25 @@ interface MedicationRow {
 export function listMedications(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const includeDeleted = req.query.include === 'deleted';
+  const patientFilter = req.query.patient_id;
+
+  let patientClause = '';
+  const params: (number | string | null)[] = [userId];
+
+  if (patientFilter === 'self') {
+    patientClause = 'AND patient_id IS NULL';
+  } else if (patientFilter && !isNaN(Number(patientFilter))) {
+    patientClause = 'AND patient_id = ?';
+    params.push(Number(patientFilter));
+  }
 
   const meds = db.prepare(`
     SELECT * FROM medications
     WHERE user_id = ?
       ${includeDeleted ? '' : 'AND deleted_at IS NULL'}
+      ${patientClause}
     ORDER BY status ASC, name ASC
-  `).all(userId) as unknown as MedicationRow[];
+  `).all(...params) as unknown as MedicationRow[];
 
   res.json({ medications: meds.map(parseMedication) });
 }
@@ -62,13 +75,24 @@ export function createMedication(req: AuthRequest, res: Response): void {
     return;
   }
 
+  const { patient_id } = req.body;
+
+  // Validate patient_id belongs to user if provided
+  if (patient_id) {
+    const pat = db.prepare('SELECT id FROM patients WHERE id = ? AND user_id = ?').get(patient_id, userId);
+    if (!pat) {
+      res.status(400).json({ error: 'Paciente não encontrado' });
+      return;
+    }
+  }
+
   const result = db.prepare(`
     INSERT INTO medications
-      (user_id, name, dosage, unit, instructions, frequency_type,
+      (user_id, patient_id, name, dosage, unit, instructions, frequency_type,
        interval_hours, daily_times, specific_days, start_time, start_date, end_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    userId, name.trim(), dosage, unit.trim(),
+    userId, patient_id || null, name.trim(), dosage, unit.trim(),
     instructions || null, frequency_type,
     interval_hours || null,
     daily_times ? JSON.stringify(daily_times) : null,

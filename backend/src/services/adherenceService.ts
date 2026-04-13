@@ -9,14 +9,18 @@ interface AdherenceStats {
   rate: number;
 }
 
-export function getGlobalAdherence(userId: number, from?: string, to?: string): AdherenceStats {
+export function getGlobalAdherence(userId: number, from?: string, to?: string, patientId?: string): AdherenceStats {
   let where = 'ai.user_id = ? AND ai.status != \'pending\'';
   const params: (number | string)[] = [userId];
 
   if (from) { where += ' AND ai.scheduled_at >= ?'; params.push(`${from}T00:00:00`); }
   if (to)   { where += ' AND ai.scheduled_at <= ?'; params.push(`${to}T23:59:59`); }
 
-  return computeStats(where, params);
+  const patientJoin = patientId ? 'JOIN medications m ON ai.medication_id = m.id' : '';
+  if (patientId === 'self') where += ' AND m.patient_id IS NULL';
+  else if (patientId && !isNaN(Number(patientId))) where += ` AND m.patient_id = ${Number(patientId)}`;
+
+  return computeStats(where, params, patientJoin);
 }
 
 export function getMedicationAdherence(userId: number, medicationId: number, from?: string, to?: string): AdherenceStats {
@@ -29,7 +33,7 @@ export function getMedicationAdherence(userId: number, medicationId: number, fro
   return computeStats(where, params);
 }
 
-function computeStats(where: string, params: (number | string)[]): AdherenceStats {
+function computeStats(where: string, params: (number | string)[], join = ''): AdherenceStats {
   const row = db.prepare(`
     SELECT
       COUNT(*) AS total,
@@ -38,6 +42,7 @@ function computeStats(where: string, params: (number | string)[]): AdherenceStat
       SUM(CASE WHEN ai.status = 'missed'    THEN 1 ELSE 0 END) AS missed,
       SUM(CASE WHEN ai.status = 'postponed' THEN 1 ELSE 0 END) AS postponed
     FROM agenda_items ai
+    ${join}
     WHERE ${where}
   `).get(...params) as unknown as { total: number; taken: number; skipped: number; missed: number; postponed: number };
 

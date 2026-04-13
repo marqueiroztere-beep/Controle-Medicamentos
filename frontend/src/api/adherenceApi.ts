@@ -2,7 +2,7 @@ import { apiClient } from './client';
 import type { AdherenceResponse, AdherenceStats, DailyAdherence, Medication } from '../types';
 
 export const adherenceApi = {
-  getGlobal: (params?: { from?: string; to?: string }) =>
+  getGlobal: (params?: { from?: string; to?: string; patient_id?: string }) =>
     apiClient.get<AdherenceResponse>('/adherence', { params }),
 
   getMedication: (medicationId: number, params?: { from?: string; to?: string }) =>

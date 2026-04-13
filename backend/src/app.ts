@@ -8,6 +8,7 @@ import agendaRoutes       from './routes/agenda';
 import doseRoutes         from './routes/doses';
 import notificationRoutes from './routes/notifications';
 import adherenceRoutes    from './routes/adherence';
+import patientRoutes      from './routes/patients';
 import { errorHandler }   from './middleware/errorHandler';
 import { configureVapid, sendPendingNotifications } from './services/notificationService';
 
@@ -31,6 +32,7 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().to
 
 // Routes
 app.use('/api/auth',          authRoutes);
+app.use('/api/patients',      patientRoutes);
 app.use('/api/medications',   medicationRoutes);
 app.use('/api/agenda',        agendaRoutes);
 app.use('/api/doses',         doseRoutes);

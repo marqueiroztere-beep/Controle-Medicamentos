@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { usePatientStore } from '../store/patientStore';
 import { agendaApi } from '../api/agendaApi';
 import { adherenceApi } from '../api/adherenceApi';
 import { DoseCard } from '../components/agenda/DoseCard';
@@ -11,23 +12,27 @@ import type { AgendaItem, AdherenceStats } from '../types';
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const getApiParam = usePatientStore(s => s.getApiParam);
+  const activeFilter = usePatientStore(s => s.activeFilter);
   const [items, setItems]       = useState<AgendaItem[]>([]);
   const [stats, setStats]       = useState<AdherenceStats | null>(null);
   const [loading, setLoading]   = useState(true);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
+      const patientId = getApiParam();
       const [agendaRes, adherenceRes] = await Promise.all([
-        agendaApi.getToday(),
-        adherenceApi.getGlobal({ from: todayISO(), to: todayISO() }),
+        agendaApi.getToday(patientId),
+        adherenceApi.getGlobal({ from: todayISO(), to: todayISO(), patient_id: patientId }),
       ]);
       setItems(agendaRes.data.items);
       setStats(adherenceRes.data.global);
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, []);
+  }, [getApiParam]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, activeFilter]);
 
   // Auto-refresh every 60s
   useEffect(() => {

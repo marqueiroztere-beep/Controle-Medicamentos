@@ -88,7 +88,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_agenda_medication     ON agenda_items(medication_id);
   CREATE INDEX IF NOT EXISTS idx_agenda_status         ON agenda_items(status);
   CREATE INDEX IF NOT EXISTS idx_medications_user      ON medications(user_id);
-  CREATE INDEX IF NOT EXISTS idx_medications_patient   ON medications(patient_id);
   CREATE INDEX IF NOT EXISTS idx_patients_user         ON patients(user_id);
   CREATE INDEX IF NOT EXISTS idx_push_user             ON push_subscriptions(user_id);
 `);
@@ -99,6 +98,13 @@ try {
   console.log('Migration: added patient_id to medications');
 } catch {
   // Column already exists — ignore
+}
+
+// Create index after ensuring column exists
+try {
+  db.exec('CREATE INDEX IF NOT EXISTS idx_medications_patient ON medications(patient_id)');
+} catch {
+  // ignore
 }
 
 console.log('Database initialized at:', DB_PATH);

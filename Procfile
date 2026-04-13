@@ -1,1 +1,1 @@
-web: node --experimental-sqlite start.js
+web: node start.js

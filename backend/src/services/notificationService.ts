@@ -70,6 +70,7 @@ export async function sendPendingNotifications(): Promise<void> {
       agendaItemId: row.agenda_item_id,
       icon: '/icons/icon-192.png',
       badge: '/icons/badge-72.png',
+      apiUrl: process.env.API_BASE_URL || '',
     });
 
     const subscription: PushSubscription = {

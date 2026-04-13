@@ -30,6 +30,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: true,
     data: {
       agendaItemId: payload.agendaItemId,
+      apiUrl: payload.apiUrl || '',
       url: '/',
     },
     actions: [
@@ -50,12 +51,14 @@ self.addEventListener('notificationclick', (event) => {
 
   notification.close();
 
+  const apiUrl = (notification.data && notification.data.apiUrl) || '';
+
   if (action === 'take' && agendaItemId) {
     // POST take action from SW — token read from IndexedDB
     event.waitUntil(
       getTokenFromIDB().then(token => {
         if (!token) return;
-        return fetch(`/api/doses/${agendaItemId}/take`, {
+        return fetch(`${apiUrl}/api/doses/${agendaItemId}/take`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -71,7 +74,7 @@ self.addEventListener('notificationclick', (event) => {
         if (!token) return;
         const postponeTo = new Date(Date.now() + 15 * 60 * 1000);
         const iso = postponeTo.toISOString().slice(0, 19);
-        return fetch(`/api/doses/${agendaItemId}/postpone`, {
+        return fetch(`${apiUrl}/api/doses/${agendaItemId}/postpone`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

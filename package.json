@@ -2,6 +2,9 @@
   "name": "medcontrol",
   "version": "1.0.0",
   "description": "Controle de Medicamentos — monorepo scripts",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:backend": "cd backend && npm run dev",

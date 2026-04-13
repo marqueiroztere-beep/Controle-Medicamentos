@@ -1,0 +1,13 @@
+{
+  "name": "MedControl — Controle de Medicamentos",
+  "short_name": "MedControl",
+  "description": "Sistema de controle de medicamentos com agenda, histórico e notificações",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0f11",
+  "theme_color": "#0e0f11",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

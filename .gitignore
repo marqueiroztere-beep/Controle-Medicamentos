@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment (NUNCA commitar — contém senhas e chaves)
+.env
+backend/.env
+
+# Build outputs
+backend/dist/
+frontend/dist/
+
+# Database (dados locais)
+backend/data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Test artifacts
+test_app.py
+recon.py
+.claude/

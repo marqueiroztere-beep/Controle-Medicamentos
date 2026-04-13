@@ -8,7 +8,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "build": "cd backend && npm install && npm run build",
-    "start": "cd backend && node dist/app.js"
+    "start": "cd backend && node --experimental-sqlite dist/app.js"
   },
   "private": true
 }

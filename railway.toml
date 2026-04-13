@@ -1,0 +1,6 @@
+[build]
+nixpacksConfigPath = "nixpacks.toml"
+rebuildNativeModules = true
+
+[deploy]
+startCommand = "node start.js"

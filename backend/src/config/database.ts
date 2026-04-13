@@ -1,32 +1,27 @@
-// Node.js v22.5+ has a built-in SQLite module (stable in v24)
-import { DatabaseSync } from 'node:sqlite';
+import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
 function resolveDataDir(): string {
-  // 1. Explicit env var (e.g. Railway volume at /var/data)
   if (process.env.DATA_DIR) {
     try {
       fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
-      // quick write test
-      const testFile = path.join(process.env.DATA_DIR, '.write_test');
-      fs.writeFileSync(testFile, '1');
-      fs.unlinkSync(testFile);
+      const test = path.join(process.env.DATA_DIR, '.write_test');
+      fs.writeFileSync(test, '1');
+      fs.unlinkSync(test);
       return process.env.DATA_DIR;
     } catch (err) {
       console.warn(`DATA_DIR "${process.env.DATA_DIR}" not writable, falling back:`, err);
     }
   }
 
-  // 2. App-relative data/ dir (works locally)
   const appRelative = path.join(__dirname, '../../data');
   try {
     fs.mkdirSync(appRelative, { recursive: true });
     return appRelative;
   } catch { /* ignore */ }
 
-  // 3. Absolute fallback — always writable in any container
   const tmpFallback = path.join(os.tmpdir(), 'medcontrol-data');
   fs.mkdirSync(tmpFallback, { recursive: true });
   console.warn(`Using temp data dir: ${tmpFallback} (data will NOT persist across restarts)`);
@@ -38,12 +33,12 @@ const DB_PATH  = path.join(DATA_DIR, 'medications.db');
 
 console.log('Database path:', DB_PATH);
 
-const db = new DatabaseSync(DB_PATH);
+const db = new Database(DB_PATH);
 
 // Performance optimizations
-db.exec("PRAGMA journal_mode = WAL");
-db.exec("PRAGMA foreign_keys = ON");
-db.exec("PRAGMA synchronous = NORMAL");
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -128,7 +123,6 @@ try {
   // Column already exists — ignore
 }
 
-// Create index after ensuring column exists
 try {
   db.exec('CREATE INDEX IF NOT EXISTS idx_medications_patient ON medications(patient_id)');
 } catch {

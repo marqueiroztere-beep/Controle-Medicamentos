@@ -32,8 +32,9 @@ export function MedicationCard({ medication, onUpdated }: Props) {
 
   async function handleInfo() {
     setInfoOpen(true);
-    if (infoText) return; // already loaded
+    if (infoText && !infoText.startsWith('Erro:')) return; // already loaded successfully
     setInfoLoading(true);
+    setInfoText(null);
     try {
       const { data } = await medicationsApi.getInfo(medication.name);
       setInfoText(data.summary);

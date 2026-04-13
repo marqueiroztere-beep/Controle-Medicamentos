@@ -12,11 +12,27 @@ import patientRoutes      from './routes/patients';
 import { errorHandler }   from './middleware/errorHandler';
 import { configureVapid, sendPendingNotifications } from './services/notificationService';
 
+// Catch any unhandled errors so Railway Deploy Logs show the reason
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled rejection:', reason);
+  process.exit(1);
+});
+
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
+console.log(`Starting server on PORT=${PORT} NODE_ENV=${process.env.NODE_ENV}`);
+
 // Configure VAPID for push notifications
-configureVapid();
+try {
+  configureVapid();
+} catch (err) {
+  console.warn('VAPID configuration failed (push notifications disabled):', err);
+}
 
 // Middleware
 app.use(cors({
@@ -42,8 +58,8 @@ app.use('/api/adherence',     adherenceRoutes);
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`\n🏥 Controle de Medicamentos API running on http://localhost:${PORT}\n`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Controle de Medicamentos API running on port ${PORT}`);
 
   // Poll for notifications every 60 seconds
   setInterval(async () => {

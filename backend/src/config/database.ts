@@ -2,13 +2,41 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../../data');
+function resolveDataDir(): string {
+  // 1. Explicit env var (e.g. Railway volume at /var/data)
+  if (process.env.DATA_DIR) {
+    try {
+      fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
+      // quick write test
+      const testFile = path.join(process.env.DATA_DIR, '.write_test');
+      fs.writeFileSync(testFile, '1');
+      fs.unlinkSync(testFile);
+      return process.env.DATA_DIR;
+    } catch (err) {
+      console.warn(`DATA_DIR "${process.env.DATA_DIR}" not writable, falling back:`, err);
+    }
+  }
+
+  // 2. App-relative data/ dir (works locally)
+  const appRelative = path.join(__dirname, '../../data');
+  try {
+    fs.mkdirSync(appRelative, { recursive: true });
+    return appRelative;
+  } catch { /* ignore */ }
+
+  // 3. Absolute fallback — always writable in any container
+  const tmpFallback = path.join(os.tmpdir(), 'medcontrol-data');
+  fs.mkdirSync(tmpFallback, { recursive: true });
+  console.warn(`Using temp data dir: ${tmpFallback} (data will NOT persist across restarts)`);
+  return tmpFallback;
+}
+
+const DATA_DIR = resolveDataDir();
 const DB_PATH  = path.join(DATA_DIR, 'medications.db');
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+console.log('Database path:', DB_PATH);
 
 const db = new DatabaseSync(DB_PATH);
 

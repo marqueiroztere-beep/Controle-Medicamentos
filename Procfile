@@ -1,1 +1,1 @@
-web: node --experimental-sqlite backend/dist/app.js
+web: node backend/dist/app.js

@@ -38,7 +38,7 @@ export function MedicationCard({ medication, onUpdated }: Props) {
       const { data } = await medicationsApi.getInfo(medication.name);
       setInfoText(data.summary);
     } catch (err) {
-      setInfoText('Não foi possível obter informações. Verifique se a chave OpenAI está configurada.');
+      setInfoText(`Erro: ${extractError(err)}`);
     } finally {
       setInfoLoading(false);
     }

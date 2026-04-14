@@ -4,6 +4,8 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
 import { PatientBar } from '../patients/PatientBar';
+import { IOSInstallPrompt } from './IOSInstallPrompt';
+import { InAppAlert } from './InAppAlert';
 
 export function AppShell() {
   return (
@@ -17,6 +19,8 @@ export function AppShell() {
         </main>
       </div>
       <MobileNav />
+      <InAppAlert />
+      <IOSInstallPrompt />
     </div>
   );
 }

@@ -6,7 +6,7 @@ const STEPS = [
   {
     title: 'Permitir alertas e sons',
     path: 'Ajustes > Notificações > MedControl',
-    detail: 'Ative Permitir Notificações, Alertas, Sons e Selos.',
+    detail: 'Ative Permitir Notificações. Depois ative Alertas, Sons e Selos.',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -15,22 +15,22 @@ const STEPS = [
     ),
   },
   {
-    title: 'Exceção no Modo Foco',
-    path: 'Ajustes > Foco > Não Perturbe > Apps',
-    detail: 'Adicione MedControl como exceção para receber lembretes mesmo no modo silencioso.',
+    title: 'Estilo de alerta: Persistente',
+    path: 'Ajustes > Notificações > MedControl > Estilo de Alerta',
+    detail: 'Escolha "Persistente" em vez de "Temporário" para que a notificação fique na tela até você ver.',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
       </svg>
     ),
   },
   {
-    title: 'Atualização em 2.o plano',
-    path: 'Ajustes > Geral > Atualizar App em 2.o Plano',
-    detail: 'Mantenha ativado para que o MedControl receba dados mesmo quando fechado.',
+    title: 'Exceção no Modo Foco',
+    path: 'Ajustes > Foco > Não Perturbe > Apps > Adicionar',
+    detail: 'Se usa Não Perturbe, adicione MedControl como exceção para receber lembretes mesmo no modo silencioso.',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M21 12a9 9 0 1 1-6.22-8.56"/><polyline points="21 3 21 9 15 9"/>
+        <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
       </svg>
     ),
   },
@@ -62,7 +62,7 @@ export function NotificationSetupGuide({ mode, open, onClose }: Props) {
   const content = (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-text-secondary">
-        Para garantir que os lembretes cheguem mesmo com a tela desligada, configure estas 3 opcoes no iPhone:
+        Para garantir que os lembretes cheguem mesmo com a tela desligada, configure no iPhone:
       </p>
 
       {STEPS.map((step, i) => (

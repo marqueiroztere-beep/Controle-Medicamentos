@@ -45,7 +45,7 @@ export function InAppAlert() {
   const [alertDoses, setAlertDoses] = useState<AlertDose[]>([]);
   const [loading, setLoading] = useState<Record<number, boolean>>({});
   const notifiedIds = useRef<Set<number>>(new Set());
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const checkUpcoming = useCallback(async () => {
     if (!isAuthenticated) return;

@@ -10,6 +10,7 @@ import { MedicationsPage } from './pages/MedicationsPage';
 import { AgendaPage } from './pages/AgendaPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { AdherencePage } from './pages/AdherencePage';
+import { AccountPage } from './pages/AccountPage';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Route path="/agenda"      element={<AgendaPage />} />
         <Route path="/history"     element={<HistoryPage />} />
         <Route path="/adherence"   element={<AdherencePage />} />
+        <Route path="/account"     element={<AccountPage />} />
         <Route path="*"            element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -16,4 +16,7 @@ export const authApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     apiClient.put('/auth/password', { currentPassword, newPassword }),
+
+  clearMyData: () =>
+    apiClient.delete<{ message: string; deleted: { agenda_items: number; medications: number; patients: number; push_subscriptions: number } }>('/auth/my-data'),
 };

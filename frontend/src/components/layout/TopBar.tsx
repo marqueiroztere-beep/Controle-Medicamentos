@@ -9,6 +9,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/agenda':     'Agenda',
   '/history':    'Histórico',
   '/adherence':  'Aderência',
+  '/account':    'Minha Conta',
 };
 
 export function TopBar() {

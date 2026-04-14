@@ -21,43 +21,61 @@ const fs = require('fs');
 const dataDir = process.env.DATA_DIR;
 
 /**
- * Railway mounts volumes AFTER the container starts.
- * Check /proc/mounts to know when the volume is truly mounted,
- * not just a regular directory in the container filesystem.
+ * Railway mounts volumes AFTER the container process starts.
+ * The Dockerfile creates /data/.container_marker inside the image.
+ * When the volume mounts over /data, the marker disappears.
+ * We wait until the marker is gone = volume is mounted.
  */
 function isVolumeMounted(dir) {
   try {
-    const mounts = fs.readFileSync('/proc/mounts', 'utf8');
-    return mounts.includes(' ' + dir + ' ');
+    // If the marker exists, the volume hasn't mounted yet
+    fs.accessSync(dir + '/.container_marker');
+    return false; // Marker still there = no volume yet
   } catch {
-    return false;
+    // Marker gone (or dir doesn't exist) = volume mounted over it
+    // Double-check the dir itself exists and is writable
+    try {
+      fs.accessSync(dir);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
 function waitForVolume(dir, maxWait) {
   return new Promise((resolve) => {
-    if (!dir) return resolve();
+    if (!dir) {
+      console.log('No DATA_DIR configured, using default path.');
+      return resolve();
+    }
 
-    // If already mounted, go
     if (isVolumeMounted(dir)) {
       const files = fs.readdirSync(dir);
       console.log(`Volume already mounted at ${dir}. Files:`, files);
       return resolve();
     }
 
-    console.log(`Waiting for volume mount at ${dir}...`);
+    console.log(`Waiting for volume mount at ${dir} (marker: ${dir}/.container_marker)...`);
     const start = Date.now();
 
     function check() {
       if (isVolumeMounted(dir)) {
         const elapsed = Date.now() - start;
         const files = fs.readdirSync(dir);
-        console.log(`Volume mounted at ${dir} (${elapsed}ms). Files:`, files);
+        console.log(`Volume mounted at ${dir} (waited ${elapsed}ms). Files:`, files);
         return resolve();
       }
-      if (Date.now() - start > maxWait) {
-        console.warn(`Volume not detected after ${maxWait}ms. Starting without persistent storage.`);
+      const elapsed = Date.now() - start;
+      if (elapsed > maxWait) {
+        console.warn(`Volume not detected after ${maxWait}ms. Starting without persistent volume.`);
+        // Remove the marker so the app can use /data as a fallback
+        try { fs.unlinkSync(dir + '/.container_marker'); } catch {}
         return resolve();
+      }
+      // Log every 5 seconds
+      if (elapsed % 5000 < 300) {
+        console.log(`Still waiting for volume... (${Math.round(elapsed / 1000)}s)`);
       }
       setTimeout(check, 300);
     }

@@ -19,32 +19,17 @@ console.log('PORT:', process.env.PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('DATA_DIR:', process.env.DATA_DIR);
 
-// Debug: find where the volume is actually mounted
-try {
-  const mounts = fs.readFileSync('/proc/mounts', 'utf8');
-  const volumeLines = mounts.split('\n').filter(l =>
-    !l.startsWith('proc ') && !l.startsWith('sysfs ') && !l.startsWith('cgroup') &&
-    !l.startsWith('devpts ') && !l.startsWith('mqueue ') && !l.startsWith('tmpfs ') &&
-    !l.startsWith('devtmpfs ') && !l.includes('/dev/shm') && !l.includes('/sys/') &&
-    !l.includes('/proc/') && l.trim()
-  );
-  console.log('=== Mount points ===');
-  volumeLines.forEach(l => console.log(' ', l));
-} catch (e) {
-  console.log('/proc/mounts not available:', e.code);
-}
-
-// Debug: list key directories
-for (const dir of ['/data', '/app/data', '/mnt', '/vol', '/volume', '/persist']) {
+// Log volume status
+const dataDir = process.env.DATA_DIR;
+if (dataDir) {
   try {
-    const files = fs.readdirSync(dir);
-    console.log(`${dir}/ contains:`, files);
-  } catch {
-    console.log(`${dir}/ does not exist`);
+    const files = fs.readdirSync(dataDir);
+    console.log(`${dataDir} contents:`, files);
+  } catch (e) {
+    console.warn(`${dataDir} not accessible:`, e.code);
   }
 }
 
-// Start the app directly — we'll fix the volume path after seeing the logs
 try {
   require('./backend/dist/app.js');
 } catch (err) {

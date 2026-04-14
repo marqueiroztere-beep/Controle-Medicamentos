@@ -12,7 +12,4 @@ RUN cd backend && npm run build
 ENV NODE_OPTIONS="--experimental-sqlite"
 ENV TZ="America/Sao_Paulo"
 
-# Marker file: exists in the container image but disappears when the volume mounts over /data
-RUN mkdir -p /data && echo "not-a-volume" > /data/.container_marker
-
 CMD ["node", "start.js"]

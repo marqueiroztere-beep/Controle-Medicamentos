@@ -136,3 +136,31 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
 
   res.json({ message: 'Senha alterada com sucesso' });
 }
+
+export function clearMyData(req: AuthRequest, res: Response): void {
+  const userId = req.user!.userId;
+
+  db.exec('BEGIN');
+  try {
+    const agendaDel = db.prepare('DELETE FROM agenda_items WHERE user_id = ?').run(userId);
+    const medDel = db.prepare('DELETE FROM medications WHERE user_id = ?').run(userId);
+    const patDel = db.prepare('DELETE FROM patients WHERE user_id = ?').run(userId);
+    const pushDel = db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(userId);
+    db.exec('COMMIT');
+
+    console.log(`[ClearData] user=${userId}: agenda=${(agendaDel as { changes: number }).changes} meds=${(medDel as { changes: number }).changes} patients=${(patDel as { changes: number }).changes} push=${(pushDel as { changes: number }).changes}`);
+
+    res.json({
+      message: 'Dados limpos com sucesso',
+      deleted: {
+        agenda_items: (agendaDel as { changes: number }).changes,
+        medications: (medDel as { changes: number }).changes,
+        patients: (patDel as { changes: number }).changes,
+        push_subscriptions: (pushDel as { changes: number }).changes,
+      }
+    });
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}

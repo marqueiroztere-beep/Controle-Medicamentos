@@ -20,23 +20,29 @@ self.addEventListener('push', (event) => {
     payload = { title: 'MedControl', body: event.data.text() };
   }
 
+  // Detect iOS — it doesn't support actions or requireInteraction
+  const isIOS = /iPhone|iPad|iPod/.test(self.navigator?.userAgent || '');
+
   const options = {
     body:    payload.body || 'Hora de tomar seu medicamento',
     icon:    '/icons/icon-192.png',
     badge:   '/icons/badge-72.png',
-    vibrate: [200, 100, 200],
+    vibrate: [200, 100, 200, 100, 200],
     tag:     `dose-${payload.agendaItemId || Date.now()}`,
     renotify: true,
-    requireInteraction: true,
+    requireInteraction: !isIOS,  // iOS ignores this, avoid issues
     data: {
       agendaItemId: payload.agendaItemId,
       apiUrl: payload.apiUrl || '',
       url: '/',
     },
-    actions: [
-      { action: 'take',     title: 'Tomei agora' },
-      { action: 'postpone', title: 'Adiar 15min' },
-    ],
+    // iOS doesn't support notification actions — only show on other platforms
+    ...(!isIOS && {
+      actions: [
+        { action: 'take',     title: 'Tomei agora' },
+        { action: 'postpone', title: 'Adiar 15min' },
+      ],
+    }),
   };
 
   event.waitUntil(

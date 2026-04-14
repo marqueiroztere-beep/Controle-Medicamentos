@@ -109,7 +109,12 @@ export async function sendPendingNotifications(): Promise<void> {
     try {
       await webpush.sendNotification(
         { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
-        payload
+        payload,
+        {
+          TTL: 3600,          // Keep message for 1 hour if device is offline
+          urgency: 'high',    // Wake device from sleep (critical for iOS)
+          topic: 'medcontrol-dose',  // Coalesce duplicate notifications
+        }
       );
 
       // Mark as notified

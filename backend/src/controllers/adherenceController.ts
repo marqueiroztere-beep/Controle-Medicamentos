@@ -59,7 +59,7 @@ export function medicationAdherence(req: AuthRequest, res: Response): void {
       COUNT(*) AS total
     FROM agenda_items ai
     WHERE ai.medication_id = ? AND ai.user_id = ? AND ai.status != 'pending'
-      AND ai.scheduled_at >= datetime('now', '-30 days')
+      AND ai.scheduled_at >= datetime('now', 'localtime', '-30 days')
     GROUP BY DATE(ai.scheduled_at)
     ORDER BY day ASC
   `).all(medicationId, userId);

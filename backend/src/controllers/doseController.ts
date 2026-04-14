@@ -33,7 +33,7 @@ export function takeDose(req: AuthRequest, res: Response): void {
 
   db.prepare(`
     UPDATE agenda_items
-    SET status = 'taken', taken_at = datetime('now'), note = ?, updated_at = datetime('now')
+    SET status = 'taken', taken_at = datetime('now', 'localtime'), note = ?, updated_at = datetime('now', 'localtime')
     WHERE id = ?
   `).run(note || null, agendaItemId);
 
@@ -53,7 +53,7 @@ export function skipDose(req: AuthRequest, res: Response): void {
 
   db.prepare(`
     UPDATE agenda_items
-    SET status = 'skipped', note = ?, updated_at = datetime('now')
+    SET status = 'skipped', note = ?, updated_at = datetime('now', 'localtime')
     WHERE id = ?
   `).run(note || 'Pulado pelo usuário', agendaItemId);
 
@@ -79,7 +79,7 @@ export function postponeDose(req: AuthRequest, res: Response): void {
   // Mark original as postponed
   db.prepare(`
     UPDATE agenda_items
-    SET status = 'postponed', postponed_to = ?, note = ?, updated_at = datetime('now')
+    SET status = 'postponed', postponed_to = ?, note = ?, updated_at = datetime('now', 'localtime')
     WHERE id = ?
   `).run(postpone_to, note || 'Adiado pelo usuário', agendaItemId);
 

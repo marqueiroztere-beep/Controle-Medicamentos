@@ -59,14 +59,19 @@ export async function sendPendingNotifications(): Promise<void> {
       AND ai.notified_at IS NULL
       AND m.deleted_at IS NULL
       AND m.status = 'active'
-      AND ai.scheduled_at BETWEEN datetime('now', '+8 minutes') AND datetime('now', '+16 minutes')
+      AND ai.scheduled_at BETWEEN datetime('now', 'localtime') AND datetime('now', 'localtime', '+16 minutes')
   `).all() as unknown as NotificationRow[];
 
   for (const row of rows) {
     const time = row.scheduled_at.substring(11, 16); // HH:MM
+    const scheduledMs = new Date(row.scheduled_at).getTime();
+    const minsUntil = Math.max(0, Math.round((scheduledMs - Date.now()) / 60000));
+    const bodyText = minsUntil <= 1
+      ? `Agora: tomar ${row.medication_name} ${row.dosage}${row.unit}`
+      : `Daqui a ${minsUntil} minutos: tomar ${row.medication_name} ${row.dosage}${row.unit} às ${time}`;
     const payload = JSON.stringify({
       title: 'Hora do remédio!',
-      body: `Daqui a 10 minutos: tomar ${row.medication_name} ${row.dosage}${row.unit} às ${time}`,
+      body: bodyText,
       agendaItemId: row.agenda_item_id,
       icon: '/icons/icon-192.png',
       badge: '/icons/badge-72.png',
@@ -86,7 +91,7 @@ export async function sendPendingNotifications(): Promise<void> {
       );
 
       // Mark as notified
-      db.prepare("UPDATE agenda_items SET notified_at = datetime('now') WHERE id = ?")
+      db.prepare("UPDATE agenda_items SET notified_at = datetime('now', 'localtime') WHERE id = ?")
         .run(row.agenda_item_id);
     } catch (err: unknown) {
       const error = err as { statusCode?: number };
@@ -102,8 +107,8 @@ export async function sendPendingNotifications(): Promise<void> {
   // Mark overdue pending items as missed
   db.prepare(`
     UPDATE agenda_items
-    SET status = 'missed', updated_at = datetime('now')
+    SET status = 'missed', updated_at = datetime('now', 'localtime')
     WHERE status = 'pending'
-      AND scheduled_at < datetime('now', '-30 minutes')
+      AND scheduled_at < datetime('now', 'localtime', '-30 minutes')
   `).run();
 }

@@ -96,7 +96,7 @@ export async function updateMe(req: AuthRequest, res: Response): Promise<void> {
     UPDATE users SET
       name = COALESCE(?, name),
       email = COALESCE(?, email),
-      updated_at = datetime('now')
+      updated_at = datetime('now', 'localtime')
     WHERE id = ?
   `).run(name?.trim() || null, email?.toLowerCase().trim() || null, userId);
 
@@ -131,7 +131,7 @@ export async function changePassword(req: AuthRequest, res: Response): Promise<v
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
-  db.prepare("UPDATE users SET password = ?, updated_at = datetime('now') WHERE id = ?")
+  db.prepare("UPDATE users SET password = ?, updated_at = datetime('now', 'localtime') WHERE id = ?")
     .run(hashedPassword, userId);
 
   res.json({ message: 'Senha alterada com sucesso' });

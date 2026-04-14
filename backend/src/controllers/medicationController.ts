@@ -143,7 +143,7 @@ export function updateMedication(req: AuthRequest, res: Response): void {
       start_time     = COALESCE(?, start_time),
       start_date     = COALESCE(?, start_date),
       end_date       = ?,
-      updated_at     = datetime('now')
+      updated_at     = datetime('now', 'localtime')
     WHERE id = ? AND user_id = ?
   `).run(
     name?.trim() || null, dosage || null, unit?.trim() || null,
@@ -183,7 +183,7 @@ export function updateMedicationStatus(req: AuthRequest, res: Response): void {
     return;
   }
 
-  db.prepare("UPDATE medications SET status = ?, updated_at = datetime('now') WHERE id = ?")
+  db.prepare("UPDATE medications SET status = ?, updated_at = datetime('now', 'localtime') WHERE id = ?")
     .run(status, id);
 
   if (status === 'paused') {
@@ -214,7 +214,7 @@ export function deleteMedication(req: AuthRequest, res: Response): void {
   // Soft delete
   db.prepare(`
     UPDATE medications
-    SET deleted_at = datetime('now'), status = 'completed', updated_at = datetime('now')
+    SET deleted_at = datetime('now', 'localtime'), status = 'completed', updated_at = datetime('now', 'localtime')
     WHERE id = ? AND user_id = ?
   `).run(id, userId);
 

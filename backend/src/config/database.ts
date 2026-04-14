@@ -45,8 +45,8 @@ db.exec(`
     name       TEXT    NOT NULL,
     email      TEXT    NOT NULL UNIQUE,
     password   TEXT    NOT NULL,
-    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS patients (
@@ -56,8 +56,8 @@ db.exec(`
     relationship TEXT,
     birth_date   TEXT,
     notes        TEXT,
-    created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS medications (
@@ -77,8 +77,8 @@ db.exec(`
     end_date       TEXT,
     status         TEXT    NOT NULL DEFAULT 'active',
     deleted_at     TEXT,
-    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at     TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at     TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS agenda_items (
@@ -91,8 +91,8 @@ db.exec(`
     postponed_to  TEXT,
     note          TEXT,
     notified_at   TEXT,
-    created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at    TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     UNIQUE(medication_id, scheduled_at)
   );
 
@@ -103,7 +103,7 @@ db.exec(`
     p256dh     TEXT    NOT NULL,
     auth       TEXT    NOT NULL,
     user_agent TEXT,
-    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
   );
 
   CREATE INDEX IF NOT EXISTS idx_agenda_user_scheduled ON agenda_items(user_id, scheduled_at);

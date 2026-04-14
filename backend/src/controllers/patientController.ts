@@ -59,7 +59,7 @@ export function updatePatient(req: AuthRequest, res: Response): void {
       relationship = ?,
       birth_date   = ?,
       notes        = ?,
-      updated_at   = datetime('now')
+      updated_at   = datetime('now', 'localtime')
     WHERE id = ? AND user_id = ?
   `).run(name?.trim() || null, relationship ?? null, birth_date ?? null, notes ?? null, id, userId);
 

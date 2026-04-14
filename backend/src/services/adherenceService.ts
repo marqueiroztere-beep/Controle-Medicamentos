@@ -13,8 +13,8 @@ export function getGlobalAdherence(userId: number, from?: string, to?: string, p
   let where = 'ai.user_id = ? AND ai.status != \'pending\'';
   const params: (number | string)[] = [userId];
 
-  if (from) { where += ' AND ai.scheduled_at >= ?'; params.push(`${from}T00:00:00`); }
-  if (to)   { where += ' AND ai.scheduled_at <= ?'; params.push(`${to}T23:59:59`); }
+  if (from) { where += " AND replace(ai.scheduled_at, 'T', ' ') >= ?"; params.push(`${from} 00:00:00`); }
+  if (to)   { where += " AND replace(ai.scheduled_at, 'T', ' ') <= ?"; params.push(`${to} 23:59:59`); }
 
   const patientJoin = patientId ? 'JOIN medications m ON ai.medication_id = m.id' : '';
   if (patientId === 'self') where += ' AND m.patient_id IS NULL';
@@ -27,8 +27,8 @@ export function getMedicationAdherence(userId: number, medicationId: number, fro
   let where = 'ai.user_id = ? AND ai.medication_id = ? AND ai.status != \'pending\'';
   const params: (number | string)[] = [userId, medicationId];
 
-  if (from) { where += ' AND ai.scheduled_at >= ?'; params.push(`${from}T00:00:00`); }
-  if (to)   { where += ' AND ai.scheduled_at <= ?'; params.push(`${to}T23:59:59`); }
+  if (from) { where += " AND replace(ai.scheduled_at, 'T', ' ') >= ?"; params.push(`${from} 00:00:00`); }
+  if (to)   { where += " AND replace(ai.scheduled_at, 'T', ' ') <= ?"; params.push(`${to} 23:59:59`); }
 
   return computeStats(where, params);
 }

@@ -65,14 +65,14 @@ function formatAgendaItem(row: AgendaRow) {
 export function getToday(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const today = todayStr();
-  const start = `${today}T00:00:00`;
-  const end   = `${today}T23:59:59`;
+  const start = `${today} 00:00:00`;
+  const end   = `${today} 23:59:59`;
   const pc = patientClause(req.query.patient_id as string | undefined);
 
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
-      AND ai.scheduled_at BETWEEN ? AND ?
+      AND replace(ai.scheduled_at, 'T', ' ') BETWEEN ? AND ?
       AND m.deleted_at IS NULL
       ${pc}
     ORDER BY ai.scheduled_at ASC
@@ -84,14 +84,14 @@ export function getToday(req: AuthRequest, res: Response): void {
 export function getByDate(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const date = req.query.date as string || todayStr();
-  const start = `${date}T00:00:00`;
-  const end   = `${date}T23:59:59`;
+  const start = `${date} 00:00:00`;
+  const end   = `${date} 23:59:59`;
   const pc = patientClause(req.query.patient_id as string | undefined);
 
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
-      AND ai.scheduled_at BETWEEN ? AND ?
+      AND replace(ai.scheduled_at, 'T', ' ') BETWEEN ? AND ?
       AND m.deleted_at IS NULL
       ${pc}
     ORDER BY ai.scheduled_at ASC
@@ -112,11 +112,11 @@ export function getByRange(req: AuthRequest, res: Response): void {
   const rows = db.prepare(`
     ${AGENDA_SELECT}
     WHERE ai.user_id = ?
-      AND ai.scheduled_at BETWEEN ? AND ?
+      AND replace(ai.scheduled_at, 'T', ' ') BETWEEN ? AND ?
       AND m.deleted_at IS NULL
       ${pc}
     ORDER BY ai.scheduled_at ASC
-  `).all(userId, `${from}T00:00:00`, `${to}T23:59:59`) as unknown as AgendaRow[];
+  `).all(userId, `${from} 00:00:00`, `${to} 23:59:59`) as unknown as AgendaRow[];
 
   res.json({ from, to, items: rows.map(formatAgendaItem) });
 }

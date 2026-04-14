@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { usePatientStore } from '../store/patientStore';
 import { authApi } from '../api/authApi';
 import { extractError } from '../api/client';
 import { Button } from '../components/ui/Button';
@@ -9,8 +10,10 @@ import { useToast } from '../components/ui/Toast';
 
 export function AccountPage() {
   const { user, logout } = useAuth();
-  const { isEnabled, disable } = useNotifications();
+  const { isEnabled, enable } = useNotifications();
   const { showToast } = useToast();
+  const setActiveFilter = usePatientStore(s => s.setActiveFilter);
+  const setPatients = usePatientStore(s => s.setPatients);
 
   const [clearOpen, setClearOpen] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -19,10 +22,21 @@ export function AccountPage() {
   async function handleClearData() {
     setClearLoading(true);
     try {
-      if (isEnabled) {
-        await disable();
-      }
       const { data } = await authApi.clearMyData();
+
+      // Reset patient filter (patients were deleted)
+      setPatients([]);
+      setActiveFilter(null);
+
+      // Clear localStorage flags so banners re-appear
+      localStorage.removeItem('push-banner-dismissed');
+      localStorage.removeItem('ios-install-prompt');
+
+      // Re-register push subscription if permission is still granted
+      if (isEnabled || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+        await enable();
+      }
+
       showToast(
         `Dados limpos: ${data.deleted.medications} medicamentos, ${data.deleted.agenda_items} itens da agenda, ${data.deleted.patients} pacientes removidos.`,
         'success'

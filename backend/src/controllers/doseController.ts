@@ -116,12 +116,12 @@ export function getHistory(req: AuthRequest, res: Response): void {
     params.push(medication_id);
   }
   if (from) {
-    conditions.push('ai.scheduled_at >= ?');
-    params.push(`${from}T00:00:00`);
+    conditions.push("replace(ai.scheduled_at, 'T', ' ') >= ?");
+    params.push(`${from} 00:00:00`);
   }
   if (to) {
-    conditions.push('ai.scheduled_at <= ?');
-    params.push(`${to}T23:59:59`);
+    conditions.push("replace(ai.scheduled_at, 'T', ' ') <= ?");
+    params.push(`${to} 23:59:59`);
   }
   if (status) {
     conditions.push('ai.status = ?');

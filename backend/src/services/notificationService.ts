@@ -40,6 +40,15 @@ export async function sendPendingNotifications(): Promise<void> {
   const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env;
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
 
+  // Debug: check current state
+  const now = db.prepare("SELECT datetime('now', 'localtime') as now").get() as { now: string };
+  const subCount = (db.prepare('SELECT COUNT(*) as c FROM push_subscriptions').get() as { c: number }).c;
+  const pendingCount = (db.prepare("SELECT COUNT(*) as c FROM agenda_items WHERE status = 'pending'").get() as { c: number }).c;
+
+  if (pendingCount > 0 || subCount > 0) {
+    console.log(`[Notifications] now=${now.now} | subscriptions=${subCount} | pending_items=${pendingCount}`);
+  }
+
   const rows = db.prepare(`
     SELECT
       ai.id AS agenda_item_id,
@@ -61,6 +70,19 @@ export async function sendPendingNotifications(): Promise<void> {
       AND m.status = 'active'
       AND ai.scheduled_at BETWEEN datetime('now', 'localtime') AND datetime('now', 'localtime', '+16 minutes')
   `).all() as unknown as NotificationRow[];
+
+  if (rows.length > 0) {
+    console.log(`[Notifications] Found ${rows.length} doses to notify:`, rows.map(r => `${r.medication_name} at ${r.scheduled_at}`));
+  } else if (subCount > 0 && pendingCount > 0) {
+    // Log upcoming items to help debug timing
+    const upcoming = db.prepare(`
+      SELECT ai.scheduled_at, m.name, ai.notified_at
+      FROM agenda_items ai JOIN medications m ON ai.medication_id = m.id
+      WHERE ai.status = 'pending' AND m.deleted_at IS NULL AND m.status = 'active'
+      ORDER BY ai.scheduled_at ASC LIMIT 3
+    `).all() as Array<{ scheduled_at: string; name: string; notified_at: string | null }>;
+    console.log(`[Notifications] No matches in window. Next pending:`, upcoming.map(u => `${u.name} at ${u.scheduled_at} (notified: ${u.notified_at || 'no'})`));
+  }
 
   for (const row of rows) {
     const time = row.scheduled_at.substring(11, 16); // HH:MM
@@ -93,6 +115,7 @@ export async function sendPendingNotifications(): Promise<void> {
       // Mark as notified
       db.prepare("UPDATE agenda_items SET notified_at = datetime('now', 'localtime') WHERE id = ?")
         .run(row.agenda_item_id);
+      console.log(`[Notifications] SENT to ${row.user_name}: ${row.medication_name} at ${row.scheduled_at}`);
     } catch (err: unknown) {
       const error = err as { statusCode?: number };
       if (error.statusCode === 410 || error.statusCode === 404) {

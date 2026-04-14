@@ -51,7 +51,7 @@ export function InAppAlert() {
     if (!isAuthenticated) return;
 
     try {
-      const { data } = await agendaApi.getToday();
+      const { data } = await agendaApi.getToday(undefined);
       const now = Date.now();
       const upcoming: AlertDose[] = [];
 

@@ -17,43 +17,55 @@ console.log('PORT:', process.env.PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('DATA_DIR:', process.env.DATA_DIR);
 
-// Wait for volume mount before starting (Railway mounts volumes after container start)
 const fs = require('fs');
 const dataDir = process.env.DATA_DIR;
+
+/**
+ * Railway mounts volumes AFTER the container starts.
+ * Check /proc/mounts to know when the volume is truly mounted,
+ * not just a regular directory in the container filesystem.
+ */
+function isVolumeMounted(dir) {
+  try {
+    const mounts = fs.readFileSync('/proc/mounts', 'utf8');
+    return mounts.includes(' ' + dir + ' ');
+  } catch {
+    return false;
+  }
+}
 
 function waitForVolume(dir, maxWait) {
   return new Promise((resolve) => {
     if (!dir) return resolve();
-    const start = Date.now();
-    const dbFile = dir + '/medications.db';
 
-    // Check if volume is mounted by trying to write a test file
+    // If already mounted, go
+    if (isVolumeMounted(dir)) {
+      const files = fs.readdirSync(dir);
+      console.log(`Volume already mounted at ${dir}. Files:`, files);
+      return resolve();
+    }
+
+    console.log(`Waiting for volume mount at ${dir}...`);
+    const start = Date.now();
+
     function check() {
-      try {
-        fs.mkdirSync(dir, { recursive: true });
-        const testFile = dir + '/.mount_test';
-        fs.writeFileSync(testFile, Date.now().toString());
-        const content = fs.readFileSync(testFile, 'utf8');
-        fs.unlinkSync(testFile);
-        if (content) {
-          const files = fs.readdirSync(dir);
-          console.log(`Volume ready at ${dir} (${Date.now() - start}ms). Files:`, files);
-          return resolve();
-        }
-      } catch (e) {
-        // Not ready yet
-      }
-      if (Date.now() - start > maxWait) {
-        console.warn(`Volume wait timeout (${maxWait}ms). Starting anyway.`);
+      if (isVolumeMounted(dir)) {
+        const elapsed = Date.now() - start;
+        const files = fs.readdirSync(dir);
+        console.log(`Volume mounted at ${dir} (${elapsed}ms). Files:`, files);
         return resolve();
       }
-      setTimeout(check, 500);
+      if (Date.now() - start > maxWait) {
+        console.warn(`Volume not detected after ${maxWait}ms. Starting without persistent storage.`);
+        return resolve();
+      }
+      setTimeout(check, 300);
     }
     check();
   });
 }
 
-waitForVolume(dataDir, 10000).then(() => {
+waitForVolume(dataDir, 30000).then(() => {
   try {
     require('./backend/dist/app.js');
   } catch (err) {

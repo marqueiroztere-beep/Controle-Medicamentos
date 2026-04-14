@@ -119,7 +119,7 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
       )}
 
       {/* Name + Dosage */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2 flex flex-col gap-1.5">
           <Input label="Nome do medicamento" value={form.name} onChange={e => { set('name', e.target.value); setInfoSummary(null); setInfoError(null); }} required placeholder="Ex: Dipirona" />
           <button
@@ -180,7 +180,7 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
       </Select>
 
       {form.frequency_type === 'interval' && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Intervalo (horas)" type="number" min="0.5" step="0.5" value={form.interval_hours as string} onChange={e => set('interval_hours', parseFloat(e.target.value) || '')} required placeholder="Ex: 8" />
           <Input label="Horário da 1ª dose" type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
         </div>
@@ -238,7 +238,7 @@ export function MedicationForm({ initial, onSubmit, onCancel, loading }: Medicat
       )}
 
       {/* Dates */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input label="Data de início" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} required />
         <Input label="Data de término" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} hint="Deixe em branco para tratamento contínuo" />
       </div>

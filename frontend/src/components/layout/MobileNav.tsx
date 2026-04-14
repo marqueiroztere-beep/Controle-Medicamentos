@@ -52,7 +52,7 @@ const NAV_ITEMS = [
 
 export function MobileNav() {
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-sm border-t border-border">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-sm border-t border-border safe-area-bottom">
       <div className="flex">
         {NAV_ITEMS.map(item => (
           <NavLink
@@ -60,7 +60,7 @@ export function MobileNav() {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) => [
-              'flex-1 flex flex-col items-center gap-1 py-2 px-1 text-xs font-medium transition-colors',
+              'flex-1 flex flex-col items-center gap-1 py-3 px-1 text-xs font-medium transition-colors',
               isActive ? 'text-purple' : 'text-text-muted',
             ].join(' ')}
           >

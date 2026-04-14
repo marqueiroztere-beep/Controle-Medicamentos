@@ -27,8 +27,8 @@ export function Input({ label, error, hint, icon, className = '', id, ...props }
           id={inputId}
           {...props}
           className={[
-            'w-full bg-surface border rounded-lg px-3 py-2.5',
-            'text-text-primary placeholder:text-text-muted text-sm',
+            'w-full bg-surface border rounded-lg px-3 py-3',
+            'text-text-primary placeholder:text-text-muted text-base sm:text-sm',
             'transition-colors duration-150',
             'focus:outline-none focus:border-purple focus:ring-1 focus:ring-purple/30',
             error ? 'border-danger' : 'border-border hover:border-muted',
@@ -63,8 +63,8 @@ export function Select({ label, error, hint, className = '', id, children, ...pr
         id={inputId}
         {...props}
         className={[
-          'w-full bg-surface border rounded-lg px-3 py-2.5',
-          'text-text-primary text-sm cursor-pointer',
+          'w-full bg-surface border rounded-lg px-3 py-3',
+          'text-text-primary text-base sm:text-sm cursor-pointer',
           'transition-colors duration-150',
           'focus:outline-none focus:border-purple focus:ring-1 focus:ring-purple/30',
           error ? 'border-danger' : 'border-border hover:border-muted',
@@ -99,8 +99,8 @@ export function TextArea({ label, error, hint, className = '', id, ...props }: T
         id={inputId}
         {...props}
         className={[
-          'w-full bg-surface border rounded-lg px-3 py-2.5',
-          'text-text-primary placeholder:text-text-muted text-sm',
+          'w-full bg-surface border rounded-lg px-3 py-3',
+          'text-text-primary placeholder:text-text-muted text-base sm:text-sm',
           'transition-colors duration-150 resize-y min-h-[80px]',
           'focus:outline-none focus:border-purple focus:ring-1 focus:ring-purple/30',
           error ? 'border-danger' : 'border-border hover:border-muted',

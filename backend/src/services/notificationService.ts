@@ -17,6 +17,7 @@ interface NotificationRow {
   endpoint: string;
   p256dh: string;
   auth: string;
+  is_mobile: number;
 }
 
 export function configureVapid(): void {
@@ -59,11 +60,19 @@ export async function sendPendingNotifications(): Promise<void> {
       ai.scheduled_at,
       ps.endpoint,
       ps.p256dh,
-      ps.auth
+      ps.auth,
+      ps.is_mobile
     FROM agenda_items ai
     JOIN medications m ON ai.medication_id = m.id
     JOIN users u ON ai.user_id = u.id
     JOIN push_subscriptions ps ON ai.user_id = ps.user_id
+      AND (
+        ps.is_mobile = 1
+        OR NOT EXISTS (
+          SELECT 1 FROM push_subscriptions ps2
+          WHERE ps2.user_id = ai.user_id AND ps2.is_mobile = 1
+        )
+      )
     WHERE ai.status = 'pending'
       AND ai.notified_at IS NULL
       AND m.deleted_at IS NULL
@@ -120,7 +129,8 @@ export async function sendPendingNotifications(): Promise<void> {
       // Mark as notified
       db.prepare("UPDATE agenda_items SET notified_at = datetime('now', 'localtime') WHERE id = ?")
         .run(row.agenda_item_id);
-      console.log(`[Notifications] SENT to ${row.user_name}: ${row.medication_name} at ${row.scheduled_at}`);
+      const deviceLabel = row.is_mobile ? 'mobile' : 'desktop';
+      console.log(`[Notifications] SENT to ${row.user_name} (${deviceLabel}): ${row.medication_name} at ${row.scheduled_at}`);
     } catch (err: unknown) {
       const error = err as { statusCode?: number };
       if (error.statusCode === 410 || error.statusCode === 404) {

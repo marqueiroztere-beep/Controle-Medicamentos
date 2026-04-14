@@ -123,6 +123,11 @@ try {
   db.exec('CREATE INDEX IF NOT EXISTS idx_medications_patient ON medications(patient_id)');
 } catch { /* ignore */ }
 
+try {
+  db.exec('ALTER TABLE push_subscriptions ADD COLUMN is_mobile INTEGER NOT NULL DEFAULT 0');
+  console.log('Migration: added is_mobile to push_subscriptions');
+} catch { /* Column already exists */ }
+
 console.log('Database initialized at:', DB_PATH);
 
 export default db;

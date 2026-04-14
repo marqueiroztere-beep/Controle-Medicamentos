@@ -11,6 +11,11 @@ export function getVapidKey(_req: Request, res: Response): void {
   res.json({ publicKey: key });
 }
 
+function detectMobile(ua: string | undefined): number {
+  if (!ua) return 0;
+  return /Mobi|Android|iPhone|iPad/i.test(ua) ? 1 : 0;
+}
+
 export function subscribe(req: AuthRequest, res: Response): void {
   const userId = req.user!.userId;
   const { endpoint, keys, userAgent } = req.body;
@@ -20,14 +25,17 @@ export function subscribe(req: AuthRequest, res: Response): void {
     return;
   }
 
+  const isMobile = detectMobile(userAgent);
+
   db.prepare(`
-    INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, is_mobile)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(endpoint) DO UPDATE SET
-      p256dh = excluded.p256dh,
-      auth   = excluded.auth,
-      user_agent = excluded.user_agent
-  `).run(userId, endpoint, keys.p256dh, keys.auth, userAgent || null);
+      p256dh     = excluded.p256dh,
+      auth       = excluded.auth,
+      user_agent = excluded.user_agent,
+      is_mobile  = excluded.is_mobile
+  `).run(userId, endpoint, keys.p256dh, keys.auth, userAgent || null, isMobile);
 
   res.status(201).json({ message: 'Subscription registrada com sucesso' });
 }

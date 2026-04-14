@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
+import { NotificationSetupGuide } from './NotificationSetupGuide';
 
 function isInStandaloneMode(): boolean {
   return ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone)
@@ -14,6 +15,7 @@ export function PushPermissionBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<'success' | 'denied' | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Only show if: authenticated, PWA mode OR desktop, notifications supported, not already enabled
   const shouldShow = isAuthenticated
@@ -34,13 +36,20 @@ export function PushPermissionBanner() {
 
   if (!showBanner) return null;
 
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
   async function handleEnable() {
     setLoading(true);
     try {
       const ok = await enable();
       if (ok) {
         setResult('success');
-        setTimeout(() => setDismissed(true), 3000);
+        // On iOS, show the setup guide after enabling
+        if (isIOS) {
+          setShowGuide(true);
+        } else {
+          setTimeout(() => setDismissed(true), 3000);
+        }
       } else {
         setResult('denied');
       }
@@ -57,12 +66,17 @@ export function PushPermissionBanner() {
 
   if (result === 'success') {
     return (
-      <div className="mx-4 mt-3 bg-success/10 border border-success/25 rounded-xl p-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-success"><path d="m5 13 4 4L19 7"/></svg>
+      <>
+        <div className="mx-4 mt-3 bg-success/10 border border-success/25 rounded-xl p-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-success"><path d="m5 13 4 4L19 7"/></svg>
+          </div>
+          <p className="text-sm text-text-primary font-medium">Notificações ativadas! Você será lembrado antes de cada dose.</p>
         </div>
-        <p className="text-sm text-text-primary font-medium">Notificações ativadas! Você será lembrado antes de cada dose.</p>
-      </div>
+        {isIOS && (
+          <NotificationSetupGuide mode="modal" open={showGuide} onClose={() => { setShowGuide(false); setDismissed(true); }} />
+        )}
+      </>
     );
   }
 

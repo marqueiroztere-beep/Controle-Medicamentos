@@ -7,6 +7,7 @@ import { extractError } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
+import { NotificationSetupGuide } from '../components/layout/NotificationSetupGuide';
 
 export function AccountPage() {
   const { user, logout } = useAuth();
@@ -67,6 +68,11 @@ export function AccountPage() {
           </div>
         </div>
       </div>
+
+      {/* iOS notification setup guide — only on mobile */}
+      {/iPhone|iPad|iPod/.test(navigator.userAgent) && (
+        <NotificationSetupGuide mode="inline" />
+      )}
 
       {/* Actions */}
       <div className="flex flex-col gap-3">

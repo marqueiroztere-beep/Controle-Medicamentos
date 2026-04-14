@@ -36,8 +36,6 @@ export function PushPermissionBanner() {
 
   if (!showBanner) return null;
 
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-
   async function handleEnable() {
     setLoading(true);
     try {

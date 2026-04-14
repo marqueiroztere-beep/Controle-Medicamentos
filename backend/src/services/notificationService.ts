@@ -68,7 +68,7 @@ export async function sendPendingNotifications(): Promise<void> {
       AND ai.notified_at IS NULL
       AND m.deleted_at IS NULL
       AND m.status = 'active'
-      AND ai.scheduled_at BETWEEN datetime('now', 'localtime') AND datetime('now', 'localtime', '+16 minutes')
+      AND replace(ai.scheduled_at, 'T', ' ') BETWEEN datetime('now', 'localtime') AND datetime('now', 'localtime', '+16 minutes')
   `).all() as unknown as NotificationRow[];
 
   if (rows.length > 0) {
@@ -132,6 +132,6 @@ export async function sendPendingNotifications(): Promise<void> {
     UPDATE agenda_items
     SET status = 'missed', updated_at = datetime('now', 'localtime')
     WHERE status = 'pending'
-      AND scheduled_at < datetime('now', 'localtime', '-30 minutes')
+      AND replace(scheduled_at, 'T', ' ') < datetime('now', 'localtime', '-30 minutes')
   `).run();
 }

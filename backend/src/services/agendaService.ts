@@ -113,7 +113,7 @@ export function cancelFuturePendingItems(medicationId: number, note: string): vo
     SET status = 'skipped', note = ?, updated_at = datetime('now', 'localtime')
     WHERE medication_id = ?
       AND status = 'pending'
-      AND scheduled_at > datetime('now', 'localtime')
+      AND replace(scheduled_at, 'T', ' ') > datetime('now', 'localtime')
   `).run(note, medicationId);
 }
 
@@ -125,7 +125,7 @@ export function regenerateFutureAgenda(medication: Medication): number {
     DELETE FROM agenda_items
     WHERE medication_id = ?
       AND status = 'pending'
-      AND scheduled_at > datetime('now', 'localtime')
+      AND replace(scheduled_at, 'T', ' ') > datetime('now', 'localtime')
   `).run(medication.id);
 
   const now = new Date();

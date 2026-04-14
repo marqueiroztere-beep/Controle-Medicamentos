@@ -102,10 +102,12 @@ export function createMedication(req: AuthRequest, res: Response): void {
 
   const med = db.prepare('SELECT * FROM medications WHERE id = ?').get(result.lastInsertRowid) as unknown as MedicationRow;
 
-  // Generate agenda for next 30 days
+  // Generate agenda for next 30 days (start from beginning of start_date so past-today slots are included)
+  const startOfDay = new Date(med.start_date + 'T00:00:00');
   const now = new Date();
+  const from = startOfDay < now ? startOfDay : now;
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const created = generateAgenda(med, now, in30Days);
+  const created = generateAgenda(med, from, in30Days);
   console.log(`Generated ${created} agenda items for medication ${med.id}`);
 
   res.status(201).json({ medication: parseMedication(med) });

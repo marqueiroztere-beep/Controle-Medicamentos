@@ -10,5 +10,6 @@ COPY backend/tsconfig.json ./backend/
 RUN cd backend && npm run build
 
 ENV NODE_OPTIONS="--experimental-sqlite"
+ENV TZ="America/Sao_Paulo"
 
 CMD ["node", "start.js"]

@@ -89,6 +89,7 @@ export interface AgendaItem {
   taken_at: string | null;
   postponed_to: string | null;
   note: string | null;
+  patient_name: string | null;
   medication: AgendaMedication;
 }
 

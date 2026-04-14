@@ -18,6 +18,7 @@ interface AgendaRow {
   med_unit: string;
   med_instructions: string | null;
   med_deleted: number;
+  patient_name: string | null;
 }
 
 const AGENDA_SELECT = `
@@ -27,9 +28,11 @@ const AGENDA_SELECT = `
     m.dosage AS med_dosage,
     m.unit  AS med_unit,
     m.instructions AS med_instructions,
-    CASE WHEN m.deleted_at IS NOT NULL THEN 1 ELSE 0 END AS med_deleted
+    CASE WHEN m.deleted_at IS NOT NULL THEN 1 ELSE 0 END AS med_deleted,
+    p.name AS patient_name
   FROM agenda_items ai
   JOIN medications m ON ai.medication_id = m.id
+  LEFT JOIN patients p ON m.patient_id = p.id
 `;
 
 function patientClause(patientFilter: string | undefined): string {
@@ -47,6 +50,7 @@ function formatAgendaItem(row: AgendaRow) {
     taken_at: row.taken_at,
     postponed_to: row.postponed_to,
     note: row.note,
+    patient_name: row.patient_name,
     medication: {
       id: row.medication_id,
       name: row.med_name,

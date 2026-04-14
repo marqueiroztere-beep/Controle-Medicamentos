@@ -5,6 +5,14 @@ function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent);
 }
 
+function isAndroid(): boolean {
+  return /Android/.test(navigator.userAgent);
+}
+
+function isMobile(): boolean {
+  return isIOS() || isAndroid();
+}
+
 function isInStandaloneMode(): boolean {
   return ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone)
     || window.matchMedia('(display-mode: standalone)').matches;
@@ -14,10 +22,10 @@ export function IOSInstallPrompt() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!isIOS() || isInStandaloneMode()) return;
+    // Show on any mobile device that hasn't installed the PWA yet
+    if (!isMobile() || isInStandaloneMode()) return;
 
-    // Show after 2s delay, but only once per session
-    const dismissed = sessionStorage.getItem('ios-install-dismissed');
+    const dismissed = localStorage.getItem('install-prompt-dismissed');
     if (dismissed) return;
 
     const timer = setTimeout(() => setShow(true), 2000);
@@ -26,14 +34,17 @@ export function IOSInstallPrompt() {
 
   function dismiss() {
     setShow(false);
-    sessionStorage.setItem('ios-install-dismissed', '1');
+    localStorage.setItem('install-prompt-dismissed', '1');
   }
 
   if (!show) return null;
 
+  const ios = isIOS();
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-      <div className="absolute inset-0" onClick={dismiss} aria-hidden />
+      {/* Backdrop — NÃO fecha ao tocar, para dar tempo de ler */}
+      <div className="absolute inset-0" aria-hidden />
       <div className="relative w-full max-w-md bg-surface rounded-t-2xl border-t border-border p-5 pb-8 animate-[slide-up_0.3s_ease-out] safe-area-bottom">
         {/* Close */}
         <button onClick={dismiss} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface2">
@@ -52,37 +63,59 @@ export function IOSInstallPrompt() {
 
         {/* Title */}
         <h3 className="font-syne font-bold text-text-primary text-lg text-center mb-2">
-          Receba lembretes no iPhone
+          Instale o MedControl
         </h3>
         <p className="text-text-secondary text-sm text-center mb-5">
-          Instale o MedControl como app para receber notificações mesmo com a tela bloqueada.
+          Adicione à tela inicial para abrir como um app e receber lembretes de medicamentos.
         </p>
 
-        {/* Steps */}
+        {/* Steps — different per platform */}
         <div className="flex flex-col gap-3 mb-5">
-          <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">1</div>
-            <div className="flex-1">
-              <p className="text-text-primary text-sm font-medium">Toque no botão Compartilhar</p>
-              <p className="text-text-muted text-xs">O ícone <span className="inline-block align-middle">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              </span> na barra do Safari</p>
-            </div>
-          </div>
+          {ios ? (
+            <>
+              <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
+                <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">1</div>
+                <div className="flex-1">
+                  <p className="text-text-primary text-sm font-medium">Toque no botão Compartilhar</p>
+                  <p className="text-text-muted text-xs">O ícone <span className="inline-block align-middle">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                  </span> na barra inferior do Safari</p>
+                </div>
+              </div>
 
-          <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">2</div>
-            <div className="flex-1">
-              <p className="text-text-primary text-sm font-medium">Adicionar à Tela de Início</p>
-              <p className="text-text-muted text-xs">Role para baixo e toque em "Adicionar à Tela de Início"</p>
-            </div>
-          </div>
+              <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
+                <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">2</div>
+                <div className="flex-1">
+                  <p className="text-text-primary text-sm font-medium">Adicionar à Tela de Início</p>
+                  <p className="text-text-muted text-xs">Role para baixo e toque em "Adicionar à Tela de Início"</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
+                <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">1</div>
+                <div className="flex-1">
+                  <p className="text-text-primary text-sm font-medium">Toque no menu do Chrome</p>
+                  <p className="text-text-muted text-xs">Os 3 pontinhos <span className="font-mono font-bold">⋮</span> no canto superior direito</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
+                <div className="w-8 h-8 rounded-full bg-purple/15 text-purple flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">2</div>
+                <div className="flex-1">
+                  <p className="text-text-primary text-sm font-medium">Adicionar à tela inicial</p>
+                  <p className="text-text-muted text-xs">Toque em "Adicionar à tela inicial" ou "Instalar app"</p>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="flex items-center gap-3 bg-surface2 rounded-xl p-3">
             <div className="w-8 h-8 rounded-full bg-teal/15 text-teal flex items-center justify-center font-mono font-bold text-sm flex-shrink-0">3</div>
             <div className="flex-1">
-              <p className="text-text-primary text-sm font-medium">Abra o app e ative o sino</p>
-              <p className="text-text-muted text-xs">Depois de instalar, abra pelo ícone e toque no sino para ativar lembretes</p>
+              <p className="text-text-primary text-sm font-medium">Abra pelo ícone na tela inicial</p>
+              <p className="text-text-muted text-xs">O MedControl vai abrir como um app, sem barra do navegador</p>
             </div>
           </div>
         </div>

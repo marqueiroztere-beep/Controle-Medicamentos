@@ -10,6 +10,8 @@ process.on('unhandledRejection', (reason) => {
   process.exit(1);
 });
 
+const fs = require('fs');
+
 console.log('=== Starting MedControl ===');
 console.log('Node:', process.version);
 console.log('CWD:', process.cwd());
@@ -17,78 +19,36 @@ console.log('PORT:', process.env.PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('DATA_DIR:', process.env.DATA_DIR);
 
-const fs = require('fs');
-const dataDir = process.env.DATA_DIR;
+// Debug: find where the volume is actually mounted
+try {
+  const mounts = fs.readFileSync('/proc/mounts', 'utf8');
+  const volumeLines = mounts.split('\n').filter(l =>
+    !l.startsWith('proc ') && !l.startsWith('sysfs ') && !l.startsWith('cgroup') &&
+    !l.startsWith('devpts ') && !l.startsWith('mqueue ') && !l.startsWith('tmpfs ') &&
+    !l.startsWith('devtmpfs ') && !l.includes('/dev/shm') && !l.includes('/sys/') &&
+    !l.includes('/proc/') && l.trim()
+  );
+  console.log('=== Mount points ===');
+  volumeLines.forEach(l => console.log(' ', l));
+} catch (e) {
+  console.log('/proc/mounts not available:', e.code);
+}
 
-/**
- * Railway mounts volumes AFTER the container process starts.
- * The Dockerfile creates /data/.container_marker inside the image.
- * When the volume mounts over /data, the marker disappears.
- * We wait until the marker is gone = volume is mounted.
- */
-function isVolumeMounted(dir) {
+// Debug: list key directories
+for (const dir of ['/data', '/app/data', '/mnt', '/vol', '/volume', '/persist']) {
   try {
-    // If the marker exists, the volume hasn't mounted yet
-    fs.accessSync(dir + '/.container_marker');
-    return false; // Marker still there = no volume yet
+    const files = fs.readdirSync(dir);
+    console.log(`${dir}/ contains:`, files);
   } catch {
-    // Marker gone (or dir doesn't exist) = volume mounted over it
-    // Double-check the dir itself exists and is writable
-    try {
-      fs.accessSync(dir);
-      return true;
-    } catch {
-      return false;
-    }
+    console.log(`${dir}/ does not exist`);
   }
 }
 
-function waitForVolume(dir, maxWait) {
-  return new Promise((resolve) => {
-    if (!dir) {
-      console.log('No DATA_DIR configured, using default path.');
-      return resolve();
-    }
-
-    if (isVolumeMounted(dir)) {
-      const files = fs.readdirSync(dir);
-      console.log(`Volume already mounted at ${dir}. Files:`, files);
-      return resolve();
-    }
-
-    console.log(`Waiting for volume mount at ${dir} (marker: ${dir}/.container_marker)...`);
-    const start = Date.now();
-
-    function check() {
-      if (isVolumeMounted(dir)) {
-        const elapsed = Date.now() - start;
-        const files = fs.readdirSync(dir);
-        console.log(`Volume mounted at ${dir} (waited ${elapsed}ms). Files:`, files);
-        return resolve();
-      }
-      const elapsed = Date.now() - start;
-      if (elapsed > maxWait) {
-        console.warn(`Volume not detected after ${maxWait}ms. Starting without persistent volume.`);
-        // Remove the marker so the app can use /data as a fallback
-        try { fs.unlinkSync(dir + '/.container_marker'); } catch {}
-        return resolve();
-      }
-      // Log every 5 seconds
-      if (elapsed % 5000 < 300) {
-        console.log(`Still waiting for volume... (${Math.round(elapsed / 1000)}s)`);
-      }
-      setTimeout(check, 300);
-    }
-    check();
-  });
+// Start the app directly — we'll fix the volume path after seeing the logs
+try {
+  require('./backend/dist/app.js');
+} catch (err) {
+  console.error('[FATAL] Failed to load app:', err.message);
+  console.error(err.stack);
+  process.exit(1);
 }
-
-waitForVolume(dataDir, 30000).then(() => {
-  try {
-    require('./backend/dist/app.js');
-  } catch (err) {
-    console.error('[FATAL] Failed to load app:', err.message);
-    console.error(err.stack);
-    process.exit(1);
-  }
-});

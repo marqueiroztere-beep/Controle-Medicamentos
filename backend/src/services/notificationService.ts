@@ -147,6 +147,6 @@ export async function sendPendingNotifications(): Promise<void> {
     UPDATE agenda_items
     SET status = 'missed', updated_at = datetime('now', 'localtime')
     WHERE status = 'pending'
-      AND replace(scheduled_at, 'T', ' ') < datetime('now', 'localtime', '-30 minutes')
+      AND replace(scheduled_at, 'T', ' ') < datetime('now', 'localtime', '-4 hours')
   `).run();
 }
